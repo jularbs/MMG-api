@@ -40,6 +40,9 @@
         "slugify": "^1.5.3",
         "string-strip-html": "^8.3.0"
     },
+    "devDependencies": {
+        "nanoid": ">=3.1.31"
+    },
     "engines": {
         "node": "12.x"
     }
