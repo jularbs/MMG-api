@@ -32,8 +32,9 @@ exports.create = async (req, res) => {
       //update the existing hero instead
       isCreate = false;
       hero = _.merge(hero, fields);
-      hero.image = hero.image._id;
-      hero.background = hero.background._id;
+
+      if (hero.image) hero.image = hero.image._id;
+      if (hero.background) hero.background = hero.background._id;
     } else {
       //create new hero
       isCreate = true;
