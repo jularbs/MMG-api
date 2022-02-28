@@ -1,4 +1,5 @@
 const Hero = require("../models/hero");
+const Portrait = require("../models/portrait");
 const formidable = require("formidable");
 const _ = require("lodash");
 const { upload } = require("../controllers/media");
@@ -6,6 +7,100 @@ const { upload } = require("../controllers/media");
 const slugify = require("slugify");
 
 exports.create = async (req, res) => {
+  //get incoming form
+  let form = new formidable.IncomingForm();
+  form.keepExtensions = true;
+
+  form.parse(req, async (err, fields, files) => {
+    if (err) {
+      console.log(err);
+      res.status(400).json({
+        status: "400",
+        message: "Unable to parse data. Please contact web administrator.",
+      });
+    }
+
+    let toInsert = new Portrait();
+
+    // lodash files-toInsert
+    toInsert = _.merge(toInsert, fields);
+
+    //slugify `name-location-group
+    toInsert.slug = slugify(
+      `${fields.name}-${fields.location}-${fields.group}`
+    );
+
+    // check files
+    if (!_.isEmpty(files)) {
+      //upload image
+      if (files.image) {
+        try {
+          const imageInfo = await upload(files.image, "portrait/image");
+          toInsert.image = imageInfo.info._id;
+        } catch (e) {
+          return res.status(400).json({
+            status: "400",
+            message: "Unable to create Portrait. Image upload failed",
+          });
+        }
+      }
+
+      //upload logo
+      if (files.logo) {
+        try {
+          const logoInfo = await upload(files.logo, "portrait/image");
+          toInsert.logo = logoInfo.info._id;
+        } catch (e) {
+          return res.status(400).json({
+            status: "400",
+            message: "Unable to create Portrait. Image upload failed",
+          });
+        }
+      }
+    }
+
+    //save
+    toInsert.save(async (err, result) => {
+      if (err) {
+        console.log(err);
+        res.status(400).json({
+          status: "400",
+          message: "Unable to add portrait card.",
+        });
+      } else {
+        await result
+          .populate("logo", "_id key bucket")
+          .populate("image", "_id key bucket")
+          .execPopulate();
+        res.status(200).json({
+          status: "200",
+          message: "Portrait added successfully",
+          data: result,
+        });
+      }
+    });
+  });
+};
+
+exports.read = async (req, res) => {};
+
+exports.listByGroupLocation = async (req, res) => {
+  const { group, location } = req.params;
+
+  const portraits = await Portrait.find({
+    group: group,
+    location: location,
+  })
+    .populate("image", "key bucket")
+    .populate("logo", "key bucket")
+    .exec();
+
+  res.json({ status: "200", message: "Success", data: portraits });
+};
+
+exports.list = async (req, res) => {};
+
+exports.update = async (req, res) => {
   //get incoming form
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
@@ -121,120 +216,6 @@ exports.create = async (req, res) => {
       }
     });
   });
-};
-
-exports.read = async (req, res) => {};
-
-exports.readByTypeLocation = async (req, res) => {
-  const { type, location } = req.params;
-
-  const hero = await Hero.findOne({
-    heroType: type,
-    heroLocation: location,
-  })
-    .populate("image", "key bucket")
-    .populate("background", "key bucket")
-    .populate("mobileBackground", "_id key bucket")
-    .exec();
-
-  res.json({ status: "200", message: "Success", data: hero });
-};
-
-exports.list = async (req, res) => {};
-
-exports.update = async (req, res) => {
-  const { slug } = req.params;
-
-  let toUpdate = await Hero.findOne({ slug }).exec();
-  if (toUpdate) {
-    let form = new formidable.IncomingForm();
-    form.keepExtensions = true;
-
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        res.status(400).json({
-          status: "400",
-          message: "Unable to parse data. Please contact web administrator.",
-        });
-      }
-
-      //merge toupdate with fields
-      toUpdate = _.merge(toUpdate, fields);
-      toUpdate.slug = slug;
-
-      //check if there is images
-      if (!_.isEmpty(files)) {
-        //upload images
-        if (files.image) {
-          try {
-            const imageInfo = await upload(files.image, "hero/image");
-            toUpdate.image = imageInfo.info._id;
-          } catch (e) {
-            res.status(400).json({
-              status: "400",
-              message: "Unable to update Hero. Image upload failed",
-            });
-          }
-        }
-
-        if (files.background) {
-          try {
-            const backgroundInfo = await upload(
-              files.background,
-              "hero/background"
-            );
-            toUpdate.background = backgroundInfo.info._id;
-          } catch (e) {
-            res.status(400).json({
-              status: "400",
-              message: "Unable to update Hero. Background upload failed",
-            });
-          }
-        }
-
-        if (files.mobileBackground) {
-          try {
-            const mobileBackgroundInfo = await upload(
-              files.mobileBackground,
-              "hero/background"
-            );
-            toUpdate.mobileBackground = mobileBackgroundInfo.info._id;
-          } catch (e) {
-            console.log("Error: ", e);
-            return res.status(400).json({
-              status: "400",
-              message: "Unable to update Hero. Mobile Background upload failed",
-            });
-          }
-        }
-      }
-
-      toUpdate.save(async (err, result) => {
-        if (err) {
-          res.status(400).json({
-            status: "400",
-            message: "Unable to save Hero.",
-          });
-        } else {
-          await result
-            .populate("background", "_id key bucket")
-            .populate("image", "_id key bucket")
-            .populate("mobileBackground", "_id key bucket")
-            .execPopulate();
-          res.json({
-            status: "200",
-            message: "Hero updated successfully.",
-            data: result,
-          });
-        }
-      });
-    });
-  } else {
-    res.status(400).json({
-      status: "400",
-      message: "Hero not found.",
-    });
-  }
 };
 
 exports.delete = async (req, res) => {};

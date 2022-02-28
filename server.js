@@ -11,6 +11,7 @@ var cron = require("node-cron");
 const authRoutes = require("./routes/auth");
 const heroRoutes = require("./routes/hero");
 const mediaRoutes = require("./routes/media");
+const portraitRoutes = require("./routes/portrait");
 
 const app = express();
 
@@ -63,6 +64,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api", authRoutes);
 app.use("/api", heroRoutes);
 app.use("/api", mediaRoutes);
+app.use("/api", portraitRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 

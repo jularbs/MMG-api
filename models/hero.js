@@ -38,6 +38,10 @@ const heroSchema = new mongoose.Schema(
       type: ObjectId,
       ref: "Media",
     },
+    mobileBackground: {
+      type: ObjectId,
+      ref: "Media",
+    },
     withLogo: {
       type: Boolean,
     },
