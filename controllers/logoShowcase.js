@@ -1,9 +1,9 @@
-const Hero = require("../models/hero");
-const Portrait = require("../models/portrait");
 const formidable = require("formidable");
 const _ = require("lodash");
 const { upload } = require("../controllers/media");
+const SimpleBusiness = require("../models/simpleBusiness");
 
+const LogoShowcase = require("../models/logoShowcase");
 const slugify = require("slugify");
 
 exports.create = async (req, res) => {
@@ -20,40 +20,36 @@ exports.create = async (req, res) => {
       });
     }
 
-    let toInsert = new Portrait();
+    let toInsert = new LogoShowcase();
 
     // lodash files-toInsert
     toInsert = _.merge(toInsert, fields);
 
     //slugify `name-location-group
-    toInsert.slug = slugify(
-      `${fields.name}_${fields.location}_${fields.group}`
-    ).toLowerCase();
+    toInsert.slug = slugify(fields.name).toLowerCase();
+
+    //check if slug already exist
+
+    const isExisting = await LogoShowcase.findOne({
+      slug: toInsert.slug,
+    }).exec();
+
+    if (isExisting) {
+      const rand = Math.floor(Date.now() / 1000);
+      toInsert.slug = `${toInsert.slug}-${rand}`;
+    }
 
     // check files
     if (!_.isEmpty(files)) {
-      //upload image
-      if (files.image) {
-        try {
-          const imageInfo = await upload(files.image, "portrait/image");
-          toInsert.image = imageInfo.info._id;
-        } catch (e) {
-          return res.status(400).json({
-            status: "400",
-            message: "Unable to create Portrait. Image upload failed",
-          });
-        }
-      }
-
       //upload logo
       if (files.logo) {
         try {
-          const logoInfo = await upload(files.logo, "portrait/logo");
+          const logoInfo = await upload(files.logo, "logo-showcase");
           toInsert.logo = logoInfo.info._id;
         } catch (e) {
           return res.status(400).json({
             status: "400",
-            message: "Unable to create Portrait. Image upload failed",
+            message: "Unable to create logo showcase. Image upload failed",
           });
         }
       }
@@ -65,16 +61,13 @@ exports.create = async (req, res) => {
         console.log(err);
         res.status(400).json({
           status: "400",
-          message: "Unable to add portrait card.",
+          message: "Unable to add logo showcase.",
         });
       } else {
-        await result
-          .populate("logo", "_id key bucket")
-          .populate("image", "_id key bucket")
-          .execPopulate();
+        await result.populate("logo", "_id key bucket").execPopulate();
         res.status(200).json({
           status: "200",
-          message: "Portrait added successfully",
+          message: "Logo showcase added successfully",
           data: result,
         });
       }
@@ -84,22 +77,16 @@ exports.create = async (req, res) => {
 
 exports.read = async (req, res) => {};
 
-exports.listByGroupLocation = async (req, res) => {
-  const { group, location } = req.params;
-
-  const portraits = await Portrait.find({
-    group: group,
-    location: location,
+exports.list = async (req, res) => {
+  const logos = await LogoShowcase.find({
     deletedAt: null,
   })
-    .populate("image", "key bucket")
     .populate("logo", "key bucket")
+    .sort({ order: 1 })
     .exec();
 
-  res.json({ status: "200", message: "Success", data: portraits });
+  res.json({ status: "200", message: "Success", data: logos });
 };
-
-exports.list = async (req, res) => {};
 
 exports.update = async (req, res) => {
   //get incoming form
@@ -115,7 +102,7 @@ exports.update = async (req, res) => {
     }
 
     //check if hero is existing by location and type
-    let toUpdate = await Portrait.findOne({
+    let toUpdate = await LogoShowcase.findOne({
       slug: fields.slug,
     }).exec();
 
@@ -123,22 +110,9 @@ exports.update = async (req, res) => {
       toUpdate = _.merge(toUpdate, fields);
 
       if (!_.isEmpty(files)) {
-        if (files.image) {
-          try {
-            const imageInfo = await upload(files.image, "portrait/image");
-            toUpdate.image = imageInfo.info._id;
-          } catch (e) {
-            return res.status(400).json({
-              status: "400",
-              message:
-                "Failed on image upload, please try again or contact administrator",
-            });
-          }
-        }
-
         if (files.logo) {
           try {
-            const logoInfo = await upload(files.logo, "portrait/logo");
+            const logoInfo = await upload(files.logo, "logo-showcase");
             toUpdate.logo = logoInfo.info._id;
           } catch (e) {
             console.log("Error: ", e);
@@ -156,17 +130,14 @@ exports.update = async (req, res) => {
           res.status(400).json({
             status: "400",
             message:
-              "Portrait update failed, please try again or contact administrator",
+              "Logo showcase update failed, please try again or contact administrator",
           });
         } else {
-          await result
-            .populate("image", "_id key bucket")
-            .populate("logo", "_id key bucket")
-            .execPopulate();
+          await result.populate("logo", "_id key bucket").execPopulate();
 
           res.json({
             status: "200",
-            message: "Portrait edited Successfully",
+            message: "Logo showcase edited Successfully",
             data: result,
           });
         }
@@ -176,7 +147,7 @@ exports.update = async (req, res) => {
       res.status(400).json({
         status: "404",
         message:
-          "Portrait to edit not existing. Please try again or contact administrator",
+          "Logo showcase to edit not existing. Please try again or contact administrator",
       });
     }
   });
@@ -186,28 +157,28 @@ exports.remove = async (req, res) => {
   const { slug } = req.params;
 
   const dateNow = Date.now();
-  const portrait = await Portrait.findOne({ slug }).exec();
+  const logoShowcase = await LogoShowcase.findOne({ slug }).exec();
 
-  if (portrait) {
-    portrait.deletedAt = dateNow;
-    portrait.save((err, result) => {
+  if (logoShowcase) {
+    logoShowcase.deletedAt = dateNow;
+    logoShowcase.save((err, result) => {
       if (err) {
         res.status(400).json({
           status: "400",
           message:
-            "There was a problem deleting the chosen portrait. Please try again later or contact the administrator",
+            "There was a problem deleting the chosen logo showcase. Please try again later or contact the administrator",
         });
       } else {
         res.json({
           status: "200",
-          message: "Portrait deleted succesfully",
+          message: "Logo showcase deleted succesfully",
         });
       }
     });
   } else {
     res.status(400).json({
       status: "404",
-      message: "Portrait you are trying to delete doesn't exist",
+      message: "Logo showcase you are trying to delete doesn't exist",
     });
   }
 };

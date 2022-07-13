@@ -1,14 +1,13 @@
 const mongoose = require("mongoose");
 const { ObjectId } = mongoose.Schema;
 
-const portraitSchema = new mongoose.Schema(
+const sideBySideSchema = new mongoose.Schema(
   {
     order: {
       type: Number,
     },
     location: { type: String, required: true },
-    group: { type: String, required: true },
-    name: {
+    title: {
       type: String,
       required: true,
     },
@@ -18,36 +17,25 @@ const portraitSchema = new mongoose.Schema(
       unique: true,
       index: true,
     },
-    position: {
+    header: {
       type: String,
     },
-    description: {
+    content: {
       type: String,
     },
-    image: {
+    background: {
       type: ObjectId,
       ref: "Media",
+      required: true,
     },
     logo: {
       type: ObjectId,
       ref: "Media",
     },
-    facebookURL: {
+    ctaText: {
       type: String,
     },
-    twitterURL: {
-      type: String,
-    },
-    instagramURL: {
-      type: String,
-    },
-    youtubeURL: {
-      type: String,
-    },
-    tiktokURL: {
-      type: String,
-    },
-    bigoLiveURL: {
+    ctaLink: {
       type: String,
     },
     deletedAt: {
@@ -60,4 +48,4 @@ const portraitSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Portrait", portraitSchema);
+module.exports = mongoose.model("SideBySide", sideBySideSchema);
