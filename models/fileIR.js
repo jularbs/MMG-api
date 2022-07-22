@@ -6,7 +6,7 @@ const fileIRSchema = new mongoose.Schema(
     asOf: {
       type: String,
     },
-    categort: {
+    category: {
       type: ObjectId,
       ref: "CategoryIR",
     },

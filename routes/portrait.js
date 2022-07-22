@@ -3,11 +3,11 @@ const router = express.Router();
 const {
   create,
   update,
-  listByGroupLocation,
+  listByLocation,
   remove,
 } = require("../controllers/portrait");
 
-router.get("/v1/portrait/:group/:location", listByGroupLocation);
+router.get("/v1/portrait/:location", listByLocation);
 
 router.post("/v1/portrait", create);
 

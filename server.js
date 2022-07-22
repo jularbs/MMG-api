@@ -19,6 +19,13 @@ const companyShowcaseRoutes = require("./routes/companyShowcase");
 const sideBySideRoutes = require("./routes/sideBySide");
 const categoryIrRoutes = require("./routes/categoryIR");
 const fileIrRoutes = require("./routes/fileIR");
+const jobPostingRoutes = require("./routes/jobPosting");
+const basicPostRoutes = require("./routes/basicPost");
+const faqRoutes = require("./routes/faq");
+const testimonialRoutes = require("./routes/testimonial");
+const historyRoutes = require("./routes/history");
+const collaborationRoutes = require("./routes/collaboration");
+const optionRoutes = require("./routes/option");
 
 const app = express();
 
@@ -79,6 +86,13 @@ app.use("/api", companyShowcaseRoutes);
 app.use("/api", sideBySideRoutes);
 app.use("/api", categoryIrRoutes);
 app.use("/api", fileIrRoutes);
+app.use("/api", jobPostingRoutes);
+app.use("/api", basicPostRoutes);
+app.use("/api", faqRoutes);
+app.use("/api", testimonialRoutes);
+app.use("/api", historyRoutes);
+app.use("/api", collaborationRoutes);
+app.use("/api", optionRoutes);
 
 app.use(express.static(__dirname + "/data/img"));
 

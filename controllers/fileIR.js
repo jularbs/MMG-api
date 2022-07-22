@@ -2,9 +2,6 @@ const formidable = require("formidable");
 const _ = require("lodash");
 const { upload } = require("../controllers/media");
 
-const LogoShowcase = require("../models/logoShowcase");
-const slugify = require("slugify");
-
 const FileIR = require("../models/fileIR");
 const CategoryIR = require("../models/categoryIR");
 
@@ -191,4 +188,17 @@ exports.remove = async (req, res) => {
       message: "File you are trying to delete doesn't exist",
     });
   }
+};
+
+exports.listFilesByCategory = async (req, res) => {
+  categoryId = req.params.id;
+  const logos = await FileIR.find({
+    category: categoryId,
+    deletedAt: null,
+  })
+    .populate("file", "key bucket")
+    .sort({ createdAt: -1 })
+    .exec();
+
+  res.json({ status: "200", message: "Success", data: logos });
 };

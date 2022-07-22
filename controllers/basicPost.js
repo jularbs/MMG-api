@@ -2,7 +2,7 @@ const formidable = require("formidable");
 const _ = require("lodash");
 const { upload } = require("../controllers/media");
 
-const CompanyShowcase = require("../models/companyShowcase");
+const BasicPost = require("../models/basicPost");
 const slugify = require("slugify");
 
 exports.create = async (req, res) => {
@@ -19,17 +19,17 @@ exports.create = async (req, res) => {
       });
     }
 
-    let toInsert = new CompanyShowcase();
+    let toInsert = new BasicPost();
 
     // lodash files-toInsert
     toInsert = _.merge(toInsert, fields);
 
     //slugify `name-location-group
-    toInsert.slug = slugify(fields.name).toLowerCase();
+    toInsert.slug = slugify(fields.title).toLowerCase();
 
     //check if slug already exist
 
-    const isExisting = await CompanyShowcase.findOne({
+    const isExisting = await BasicPost.findOne({
       slug: toInsert.slug,
     }).exec();
 
@@ -41,14 +41,17 @@ exports.create = async (req, res) => {
     // check files
     if (!_.isEmpty(files)) {
       //upload logo
-      if (files.logo) {
+      if (files.displayImage) {
         try {
-          const logoInfo = await upload(files.logo, "company-showcase");
-          toInsert.logo = logoInfo.info._id;
+          const displayImageInfo = await upload(
+            files.displayImage,
+            "basic-post"
+          );
+          toInsert.displayImage = displayImageInfo.info._id;
         } catch (e) {
           return res.status(400).json({
             status: "400",
-            message: "Unable to create company showcase. Image upload failed",
+            message: "Unable to create basic. Image upload failed",
           });
         }
       }
@@ -60,13 +63,13 @@ exports.create = async (req, res) => {
         console.log(err);
         res.status(400).json({
           status: "400",
-          message: "Unable to add company showcase.",
+          message: "Unable to add basic post.",
         });
       } else {
-        await result.populate("logo", "_id key bucket").execPopulate();
+        await result.populate("displayImage", "_id key bucket").execPopulate();
         res.status(200).json({
           status: "200",
-          message: "Company showcase added successfully",
+          message: "Basic post added successfully",
           data: result,
         });
       }
@@ -77,26 +80,26 @@ exports.create = async (req, res) => {
 exports.read = async (req, res) => {};
 
 exports.list = async (req, res) => {
-  const companies = await CompanyShowcase.find({
+  const basicPosts = await BasicPost.find({
     deletedAt: null,
   })
-    .populate("logo", "key bucket")
+    .populate("displayImage", "key bucket")
     .sort({ order: 1 })
     .exec();
 
-  res.json({ status: "200", message: "Success", data: companies });
+  res.json({ status: "200", message: "Success", data: basicPosts });
 };
 
 exports.listByLocation = async (req, res) => {
-  const companies = await CompanyShowcase.find({
+  const basicPosts = await BasicPost.find({
     location: req.params.location,
     deletedAt: null,
   })
-    .populate("logo", "key bucket")
+    .populate("displayImage", "key bucket")
     .sort({ order: 1 })
     .exec();
 
-  res.json({ status: "200", message: "Success", data: companies });
+  res.json({ status: "200", message: "Success", data: basicPosts });
 };
 
 exports.update = async (req, res) => {
@@ -113,7 +116,7 @@ exports.update = async (req, res) => {
     }
 
     //check if hero is existing by location and type
-    let toUpdate = await CompanyShowcase.findOne({
+    let toUpdate = await BasicPost.findOne({
       slug: fields.slug,
     }).exec();
 
@@ -121,16 +124,18 @@ exports.update = async (req, res) => {
       toUpdate = _.merge(toUpdate, fields);
 
       if (!_.isEmpty(files)) {
-        if (files.logo) {
+        if (files.displayImage) {
           try {
-            const logoInfo = await upload(files.logo, "company-showcase");
-            toUpdate.logo = logoInfo.info._id;
+            const displayImageInfo = await upload(
+              files.displayImage,
+              "basic-post"
+            );
+            toUpdate.displayImage = displayImageInfo.info._id;
           } catch (e) {
-            console.log("Error: ", e);
             return res.status(400).json({
               status: "400",
               message:
-                "Failed on logo upload, please try again or contact administrator",
+                "Failed on display image upload, please try again or contact administrator",
             });
           }
         }
@@ -142,14 +147,16 @@ exports.update = async (req, res) => {
           res.status(400).json({
             status: "400",
             message:
-              "Company showcase update failed, please try again or contact administrator",
+              "Basic post update failed, please try again or contact administrator",
           });
         } else {
-          await result.populate("logo", "_id key bucket").execPopulate();
+          await result
+            .populate("displayImage", "_id key bucket")
+            .execPopulate();
 
           res.json({
             status: "200",
-            message: "Company showcase edited Successfully",
+            message: "Basic post edited Successfully",
             data: result,
           });
         }
@@ -159,7 +166,7 @@ exports.update = async (req, res) => {
       res.status(400).json({
         status: "404",
         message:
-          "Company showcase to edit not existing. Please try again or contact administrator",
+          "Basic post to edit not existing. Please try again or contact administrator",
       });
     }
   });
@@ -169,28 +176,28 @@ exports.remove = async (req, res) => {
   const { slug } = req.params;
 
   const dateNow = Date.now();
-  const companyShowcase = await CompanyShowcase.findOne({ slug }).exec();
+  const basicPost = await BasicPost.findOne({ slug }).exec();
 
-  if (companyShowcase) {
-    companyShowcase.deletedAt = dateNow;
-    companyShowcase.save((err, result) => {
+  if (basicPost) {
+    basicPost.deletedAt = dateNow;
+    basicPost.save((err, result) => {
       if (err) {
         res.status(400).json({
           status: "400",
           message:
-            "There was a problem deleting the chosen logo showcase. Please try again later or contact the administrator",
+            "There was a problem deleting the chosen basic post. Please try again later or contact the administrator",
         });
       } else {
         res.json({
           status: "200",
-          message: "Company showcase deleted succesfully",
+          message: "Basic post deleted succesfully",
         });
       }
     });
   } else {
     res.status(400).json({
       status: "404",
-      message: "Company showcase you are trying to delete doesn't exist",
+      message: "Basic post you are trying to delete doesn't exist",
     });
   }
 };

@@ -7,7 +7,6 @@ const portraitSchema = new mongoose.Schema(
       type: Number,
     },
     location: { type: String, required: true },
-    group: { type: String, required: true },
     name: {
       type: String,
       required: true,

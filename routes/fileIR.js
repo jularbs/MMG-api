@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { create, update, list, remove } = require("../controllers/fileIR");
+const { create, update, list, remove, listFilesByCategory } = require("../controllers/fileIR");
 
 router.post("/v1/file-ir", create);
 
 router.get("/v1/file-ir", list);
+router.get("/v1/file-ir/:id", listFilesByCategory);
 
 router.put("/v1/file-ir", update);
 
